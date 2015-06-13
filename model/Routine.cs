@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace model {
-	public class Routine {
+	public class Routine : IScriptable {
 		public bool AnsiNull;
 		public string Name;
 		public bool QuotedId;
@@ -9,24 +9,31 @@ namespace model {
 		public string Text;
 		public string Type;
 
-		public Routine(string schema, string name) {
+		private Database _db;
+
+		public Routine(string schema, string name, Database db) {
 			Schema = schema;
 			Name = name;
+			_db = db;
 		}
 
-		public string ScriptCreate(Database db) {
+		public string BaeFileName {
+			get { return string.Format("{0}.{1}", Schema, Name); }
+		}
+
+		public string ScriptCreate() {
 			var script = "";
 			var defaultQuotedId = !QuotedId;
-			if (db != null && db.FindProp("QUOTED_IDENTIFIER") != null) {
-				defaultQuotedId = db.FindProp("QUOTED_IDENTIFIER").Value == "ON";
+			if (_db != null && _db.FindProp("QUOTED_IDENTIFIER") != null) {
+				defaultQuotedId = _db.FindProp("QUOTED_IDENTIFIER").Value == "ON";
 			}
 			if (defaultQuotedId != QuotedId) {
 				script = string.Format(@"SET QUOTED_IDENTIFIER {0} {1}GO{1}",
 					(QuotedId ? "ON" : "OFF"), Environment.NewLine);
 			}
 			var defaultAnsiNulls = !AnsiNull;
-			if (db != null && db.FindProp("ANSI_NULLS") != null) {
-				defaultAnsiNulls = db.FindProp("ANSI_NULLS").Value == "ON";
+			if (_db != null && _db.FindProp("ANSI_NULLS") != null) {
+				defaultAnsiNulls = _db.FindProp("ANSI_NULLS").Value == "ON";
 			}
 			if (defaultAnsiNulls != AnsiNull) {
 				script = string.Format(@"SET ANSI_NULLS {0} {1}GO{1}",

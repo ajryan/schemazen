@@ -63,8 +63,10 @@
     <Compile Include="Exceptions.cs" />
     <Compile Include="ForeignKey.cs" />
     <Compile Include="Identity.cs" />
+    <Compile Include="IScriptable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Routine.cs" />
+    <Compile Include="RoutineList.cs" />
     <Compile Include="Table.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

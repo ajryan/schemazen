@@ -18,7 +18,7 @@ namespace model {
 		}
 	}
 
-	public class Table {
+	public class Table : IScriptable {
 		public ColumnList Columns = new ColumnList();
 		public List<Constraint> Constraints = new List<Constraint>();
 		public string Name;
@@ -27,6 +27,10 @@ namespace model {
 		public Table(string owner, string name) {
 			Owner = owner;
 			Name = name;
+		}
+
+		public string BaeFileName {
+			get { return string.Format("{0}.{1}", Owner, Name); }
 		}
 
 		public Constraint PrimaryKey {

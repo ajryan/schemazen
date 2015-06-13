@@ -22,7 +22,7 @@ namespace model {
 			get { return lineNumber; }
 		}
 
-		public string Message {
+		public override string Message {
 			get { return message; }
 		}
 	}
@@ -51,7 +51,7 @@ namespace model {
 			_lineNumber = lineNumber;
 		}
 
-		public string Message {
+		public override string Message {
 			get { return _message; }
 		}
 
@@ -73,7 +73,7 @@ namespace model {
 			_lineNumber = lineNumber;
 		}
 
-		public string Message {
+		public override string Message {
 			get { return _message; }
 		}
 

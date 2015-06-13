@@ -1,0 +1,6 @@
+; editorconfig
+
+root = true
+
+[*.cs]
+indent_style = tab

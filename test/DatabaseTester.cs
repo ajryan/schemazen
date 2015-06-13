@@ -14,6 +14,17 @@ namespace test {
 
 			//create the db from sql script
 			TestHelper.ExecSql("CREATE DATABASE TEST_SOURCE", "");
+			for (int i = 1; i < 100; i++) {
+				TestHelper.ExecSql(string.Format(@"
+					CREATE TABLE [dbo].[MediaType{0}]
+					(
+							[MediaTypeId] INT NOT NULL,
+							[Name] NVARCHAR(120),
+							CONSTRAINT [PK_MediaType{0}] PRIMARY KEY CLUSTERED ([MediaTypeId])
+					);", i), "TEST_SOURCE");
+
+				TestHelper.ExecSql(string.Format("CREATE PROCEDURE dbo.Test{0} AS SELECT * FROM foo", i), "TEST_SOURCE");
+			}
 			TestHelper.ExecBatchSql(File.ReadAllText(pathToSchemaScript), "TEST_SOURCE");
 
 			//load the model from newly created db and create a copy
@@ -56,12 +67,12 @@ namespace test {
 
 		[Test]
 		public void TestBug13() {
-			TestCopySchema(ConfigHelper.TestSchemaDir + "/SANDBOX3_GBL.SQL");
+			TestCopySchema(Path.Combine(ConfigHelper.TestSchemaDir, "SANDBOX3_GBL.SQL"));
 		}
 
 		[Test]
 		public void TestCollate() {
-			string pathToSchema = ConfigHelper.TestSchemaDir + "/SANDBOX3_GBL.SQL";
+			string pathToSchema = Path.Combine(ConfigHelper.TestSchemaDir, "SANDBOX3_GBL.SQL");
 			TestHelper.DropDb("TEST_SOURCE");
 
 			//create the db from sql script
@@ -180,7 +191,7 @@ namespace test {
 		[Test]
 		public void TestScriptDeletedProc() {
 			var source = new Database();
-			source.Routines.Add(new Routine("dbo", "test"));
+			source.Routines.Add("dbo", "test");
 			source.FindRoutine("test", "dbo").Type = "PROCEDURE";
 			source.FindRoutine("test", "dbo").Text = @"
 create procedure [dbo].[test]

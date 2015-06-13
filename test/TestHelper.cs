@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Text;
 using model;
 using NUnit.Framework;
 

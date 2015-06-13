@@ -53,6 +53,9 @@ namespace model {
 			}
 		}
 
+		public string TableName { get; set; }
+		public string TableSchema { get; set; }
+
 		public ColumnDiff Compare(Column c) {
 			return new ColumnDiff(this, c);
 		}

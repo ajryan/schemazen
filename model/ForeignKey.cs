@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace model {
-	public class ForeignKey {
+	public class ForeignKey : IScriptable {
 		public bool Check;
 		public List<string> Columns = new List<string>();
 		public string Name;
@@ -42,6 +42,10 @@ namespace model {
 					"Unable to Script FK {0}. {1} must not be null.",
 					Name, argName));
 			}
+		}
+
+		public string BaeFileName {
+			get { return string.Format("{0}.{1}", Table.Owner, Table.Name); }
 		}
 
 		public string ScriptCreate() {
