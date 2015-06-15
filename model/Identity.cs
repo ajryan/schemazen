@@ -1,20 +1,27 @@
 ﻿namespace model {
-	public class Identity {
+	public class Identity : Attachable {
+		public string TableSchema;
+		public string TableName;
+		public string ColumnName;
 		public string Increment;
 		public string Seed;
 
-		public Identity(string seed, string increment) {
+		public Identity(string tableSchema, string tableName, string columnName, string seed, string increment) {
+			TableSchema = tableSchema;
+			TableName = tableName;
+			ColumnName = columnName;
 			Seed = seed;
 			Increment = increment;
 		}
 
-		public Identity(int seed, int increment) {
-			Seed = seed.ToString();
-			Increment = increment.ToString();
+		public string Script() {
+			return $"IDENTITY ({Seed},{Increment})";
 		}
 
-		public string Script() {
-			return string.Format("IDENTITY ({0},{1})", Seed, Increment);
+		public override void Attach() {
+			Table t = Database.Tables.Find(TableName, TableSchema);
+			Column c = t.Columns.Find(ColumnName);    // todo: inconsistent with t.FindXXX
+			c.Identity = this;
 		}
 	}
 }

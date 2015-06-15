@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace model {
-	public class ForeignKey : IScriptable {
+	public class ForeignKey : Scriptable {
 		public bool Check;
 		public List<string> Columns = new List<string>();
 		public string Name;
@@ -44,11 +44,11 @@ namespace model {
 			}
 		}
 
-		public string BaeFileName {
+		public override string BaseFileName {
 			get { return string.Format("{0}.{1}", Table.Owner, Table.Name); }
 		}
 
-		public string ScriptCreate() {
+		public override string ScriptCreate() {
 			AssertArgNotNull(Table, "Table");
 			AssertArgNotNull(Columns, "Columns");
 			AssertArgNotNull(RefTable, "RefTable");

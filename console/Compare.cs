@@ -26,8 +26,8 @@ namespace console {
 		public override int Run(string[] remainingArguments) {
 			var sourceDb = new Database();
 			var targetDb = new Database();
-			sourceDb.Connection = _source;
-			targetDb.Connection = _target;
+			sourceDb.ConnectionString = _source;
+			targetDb.ConnectionString = _target;
 			sourceDb.Load();
 			targetDb.Load();
 			DatabaseDiff diff = sourceDb.Compare(targetDb);

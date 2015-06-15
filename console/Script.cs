@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Security.Cryptography;
+using System.Linq;
 using model;
 
 namespace console {
@@ -25,10 +25,11 @@ namespace console {
 			var db = CreateDatabase();
 			db.Load();
 
-			if (!String.IsNullOrEmpty(DataTables)) {
+			if (!string.IsNullOrEmpty(DataTables)) {
 				HandleDataTables(db, DataTables);
 			}
-			if (!String.IsNullOrEmpty(DataTablesPattern)) {
+
+			if (!string.IsNullOrEmpty(DataTablesPattern)) {
 				var tables = db.FindTablesRegEx(DataTablesPattern);
 				foreach (var t in tables) {
 					if (db.DataTables.Contains(t)) continue;
@@ -36,7 +37,7 @@ namespace console {
 				}
 			}
 
-	if (!Overwrite && Directory.Exists(db.Dir)) {
+			if (!Overwrite && Directory.Exists(db.Dir)) {
 				Console.Write("{0} already exists do you want to replace it? (Y/N)", db.Dir);
 				var key = Console.ReadKey();
 				if (key.Key != ConsoleKey.Y) {
@@ -52,14 +53,14 @@ namespace console {
 		}
 
 		private static void HandleDataTables(Database db, string tableNames) {
-			foreach (var value in tableNames.Split(',')) {
+			foreach (var tableName in tableNames.Split(',')) {
 				var schema = "dbo";
-				var name = value;
-				if (value.Contains(".")) {
-					schema = value.Split('.')[0];
-					name = value.Split('.')[1];
+				var name = tableName;
+				if (tableName.Contains(".")) {
+					schema = tableName.Split('.')[0];
+					name = tableName.Split('.')[1];
 				}
-				var t = db.FindTable(name, schema);
+				var t = db.Tables.Find(name, schema);
 				if (t == null) {
 					Console.WriteLine(
 						"warning: could not find data table {0}.{1}",

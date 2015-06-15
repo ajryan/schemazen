@@ -1,15 +1,20 @@
 ﻿namespace model {
-	public class Default {
+	public class Default : Attachable
+	{
+		public string TableSchema;
+		public string TableName;
+		public string ColumnName;
+
 		public string Name;
 		public string Value;
 
-		public Default(string name, string value) {
-			Name = name;
-			Value = value;
+		public override void Attach() {
+			Table t = Database.Tables.Find(TableName, TableSchema);
+			t.Columns.Find(ColumnName).Default = this;
 		}
 
 		public string Script() {
-			return string.Format("CONSTRAINT [{0}] DEFAULT {1}", Name, Value);
+			return $"CONSTRAINT [{Name}] DEFAULT {Value}";
 		}
 	}
 }

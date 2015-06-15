@@ -1,8 +1,6 @@
 ﻿namespace model {
-	public class DbProp {
-		public Database _db;
-
-		public DbProp(string name, string value) {
+	public class DbProperty : Scriptable {
+		public DbProperty(string name, string value) {
 			Name = name;
 			Value = value;
 		}
@@ -10,21 +8,21 @@
 		public string Name { get; set; }
 		public string Value { get; set; }
 
-		public string Script() {
+		public override string BaseFileName => Name;
+
+		public override string ScriptCreate() {
 			switch (Name.ToUpper()) {
 				case "COLLATE":
 					if (string.IsNullOrEmpty(Value)) return "";
-					return string.Format("EXEC('ALTER DATABASE [' + @DB + '] COLLATE {0}')",
-						Value);
+					return $"EXEC('ALTER DATABASE [' + @DB + '] COLLATE {Value}')";
 
 				case "COMPATIBILITY_LEVEL":
 					if (string.IsNullOrEmpty(Value)) return "";
-					return string.Format("EXEC dbo.sp_dbcmptlevel @DB, {0}", Value);
+					return $"EXEC dbo.sp_dbcmptlevel @DB, {Value}";
 
 				default:
 					if (string.IsNullOrEmpty(Value)) return "";
-					return string.Format("EXEC('ALTER DATABASE [' + @DB + '] SET {0} {1}')",
-						Name, Value);
+					return $"EXEC('ALTER DATABASE [' + @DB + '] SET {Name} {Value}')";
 			}
 		}
 	}

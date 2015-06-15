@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace model {
-	public class Column {
+	public class Column : Attachable {
 		public Default Default;
 		public Identity Identity;
 		public bool IsNullable;
@@ -18,6 +18,7 @@ namespace model {
 		public Column(string name, string type, bool @null, Default @default) {
 			Name = name;
 			Type = type;
+			IsNullable = @null;
 			Default = @default;
 		}
 
@@ -32,32 +33,26 @@ namespace model {
 			Scale = scale;
 		}
 
-		private string IsNullableText {
-			get {
-				if (IsNullable) return "NULL";
-				return "NOT NULL";
-			}
-		}
+		private string IsNullableText => IsNullable ? "NULL" : "NOT NULL";
 
-		public string DefaultText {
-			get {
-				if (Default == null) return "";
-				return "\r\n      " + Default.Script();
-			}
-		}
+		public string DefaultText => Default == null
+			? ""
+			: "\r\n      " + Default.Script();
 
-		public string IdentityText {
-			get {
-				if (Identity == null) return "";
-				return "\r\n      " + Identity.Script();
-			}
-		}
+		public string IdentityText => Identity == null
+			? ""
+			: "\r\n      " + Identity.Script();
 
 		public string TableName { get; set; }
 		public string TableSchema { get; set; }
 
 		public ColumnDiff Compare(Column c) {
 			return new ColumnDiff(this, c);
+		}
+
+
+		public override void Attach() {
+			Database.Tables.Find(TableName, TableSchema).Columns.Add(this);
 		}
 
 		public string Script() {
@@ -84,47 +79,43 @@ namespace model {
 				case "tinyint":
 				case "uniqueidentifier":
 				case "xml":
+					return $"[{Name}] [{Type}] {IsNullableText} {DefaultText} {IdentityText}";
 
-					return string.Format("[{0}] [{1}] {2} {3} {4}", Name, Type, IsNullableText, DefaultText, IdentityText);
 				case "binary":
 				case "char":
 				case "nchar":
 				case "nvarchar":
 				case "varbinary":
 				case "varchar":
-					string lengthString = Length.ToString();
-					if (lengthString == "-1") lengthString = "max";
+					string lengthString = Length == -1 ? "max" : Length.ToString();
+					return $"[{Name}] [{Type}]({lengthString}) {IsNullableText} {DefaultText}";
 
-					return string.Format("[{0}] [{1}]({2}) {3} {4}", Name, Type, lengthString, IsNullableText, DefaultText);
 				case "decimal":
 				case "numeric":
+					return $"[{Name}] [{Type}]({Precision},{Scale}) {IsNullableText} {DefaultText}";
 
-					return string.Format("[{0}] [{1}]({2},{3}) {4} {5}", Name, Type, Precision, Scale, IsNullableText, DefaultText);
 				default:
 					throw new NotSupportedException("SQL data type " + Type + " is not supported.");
 			}
 		}
-	}
 
-	public class ColumnDiff {
-		public Column Source;
-		public Column Target;
-
-		public ColumnDiff(Column target, Column source) {
-			Source = source;
-			Target = target;
-		}
-
-		public bool IsDiff {
-			get {
-				return Source.DefaultText != Target.DefaultText || Source.IsNullable != Target.IsNullable ||
-				       Source.Length != Target.Length || Source.Position != Target.Position || Source.Type != Target.Type ||
-				       Source.Precision != Target.Precision || Source.Scale != Target.Scale;
+		public void SetSize(object maxLength, object precision, object scale) {
+			switch (Type)
+			{
+				case "binary":
+				case "char":
+				case "nchar":
+				case "nvarchar":
+				case "varbinary":
+				case "varchar":
+					Length = (int)maxLength;
+					break;
+				case "decimal":
+				case "numeric":
+					Precision = (byte)precision;
+					Scale = (int)scale;
+					break;
 			}
-		}
-
-		public string Script() {
-			return Target.Script();
 		}
 	}
 }

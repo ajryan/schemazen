@@ -21,14 +21,14 @@ namespace test {
 			db.Tables.Add(t1);
 			db.Tables.Add(t2);
 			db.ForeignKeys.Add(fk);
-			db.Connection = TestHelper.GetConnString("TESTDB");
+			db.ConnectionString = TestHelper.GetConnString("TESTDB");
 			db.ExecCreate(true);
 			db.Load();
 
-			Assert.AreEqual("c3", db.FindForeignKey("fk_test").Columns[0]);
-			Assert.AreEqual("c2", db.FindForeignKey("fk_test").Columns[1]);
-			Assert.AreEqual("c1", db.FindForeignKey("fk_test").RefColumns[0]);
-			Assert.AreEqual("c2", db.FindForeignKey("fk_test").RefColumns[1]);
+			Assert.AreEqual("c3", db.ForeignKeys.Find("fk_test").Columns[0]);
+			Assert.AreEqual("c2", db.ForeignKeys.Find("fk_test").Columns[1]);
+			Assert.AreEqual("c1", db.ForeignKeys.Find("fk_test").RefColumns[0]);
+			Assert.AreEqual("c2", db.ForeignKeys.Find("fk_test").RefColumns[1]);
 
 			db.ExecCreate(true);
 		}
@@ -38,7 +38,7 @@ namespace test {
 			var person = new Table("dbo", "Person");
 			person.Columns.Add(new Column("id", "int", false, null));
 			person.Columns.Add(new Column("name", "varchar", 50, false, null));
-			person.Columns.Find("id").Identity = new Identity(1, 1);
+			person.Columns.Find("id").Identity = new Identity("dbo", "Person", "id", "1", "1");	// TODO need Column.SetIdentity? or split the metadata from the dto (e.g. schema, table, column, etc
 			person.Constraints.Add(new Constraint("PK_Person", "PRIMARY KEY", "id"));
 
 			var address = new Table("dbo", "Address");
@@ -48,7 +48,7 @@ namespace test {
 			address.Columns.Add(new Column("city", "varchar", 50, false, null));
 			address.Columns.Add(new Column("state", "char", 2, false, null));
 			address.Columns.Add(new Column("zip", "varchar", 5, false, null));
-			address.Columns.Find("id").Identity = new Identity(1, 1);
+			address.Columns.Find("id").Identity = new Identity("dbo", "Address", "id", "1", "1");
 			address.Constraints.Add(new Constraint("PK_Address", "PRIMARY KEY", "id"));
 
 			var fk = new ForeignKey(address, "FK_Address_Person", "personId", person, "id", "", "CASCADE");

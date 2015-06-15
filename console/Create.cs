@@ -15,9 +15,9 @@ namespace console {
 				return 1;
 			}
 
-			if (DBHelper.DbExists(db.Connection) && !Overwrite) {
+			if (DBHelper.DbExists(db.ConnectionString) && !Overwrite) {
 				Console.WriteLine("{0} {1} already exists do you want to drop it? (Y/N)",
-					Server, DbName); 
+					Server, DbName);
 
 				var answer = char.ToUpper(Convert.ToChar(Console.Read()));
 				while (answer != 'Y' && answer != 'N') {

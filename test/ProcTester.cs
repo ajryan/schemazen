@@ -14,7 +14,7 @@ namespace test {
 			t.Columns.Add(new Column("zip", "char", 5, false, null));
 			t.Constraints.Add(new Constraint("PK_Address", "PRIMARY KEY", "id"));
 
-			var getAddress = new Routine("dbo", "GetAddress", null);
+			var getAddress = new Routine("dbo", "GetAddress");
 			getAddress.Text = @"
 CREATE PROCEDURE [dbo].[GetAddress]
     @id int

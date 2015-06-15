@@ -72,7 +72,7 @@ namespace test {
 			t.Columns.Add(new Column("id", "int", false, null));
 			t.Columns.Add(new Column("code", "char", 1, false, null));
 			t.Columns.Add(new Column("description", "varchar", 20, false, null));
-			t.Columns.Find("id").Identity = new Identity(1, 1);
+			t.Columns.Find("id").Identity = new Identity("dbo", "Status", "id", "1", "1");
 			t.Constraints.Add(new Constraint("PK_Status", "PRIMARY KEY", "id"));
 
 			string conn = TestHelper.GetConnString("TESTDB");
@@ -123,7 +123,7 @@ namespace test {
 			t.Columns.Add(new Column("x", "uniqueidentifier", false, null));
 			t.Columns.Add(new Column("y", "varbinary", 50, false, null));
 			t.Columns.Add(new Column("z", "varbinary", -1, false, null));
-			t.Columns.Add(new Column("aa", "varchar", 50, true, new Default("DF_AllTypesTest_aa", "'asdf'")));
+			t.Columns.Add(new Column("aa", "varchar", 50, true, new Default { Name = "DF_AllTypesTest_aa", Value = "'asdf'" }));
 			t.Columns.Add(new Column("bb", "varchar", -1, true, null));
 			t.Columns.Add(new Column("cc", "xml", true, null));
 

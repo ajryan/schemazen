@@ -29,21 +29,21 @@ namespace test {
 
 			//load the model from newly created db and create a copy
 			var copy = new Database("TEST_COPY");
-			copy.Connection = TestHelper.GetConnString("TEST_SOURCE");
+			copy.ConnectionString = TestHelper.GetConnString("TEST_SOURCE");
 			copy.Load();
 			SqlConnection.ClearAllPools();
 			TestHelper.ExecBatchSql(copy.ScriptCreate(), "master");
 
 			//compare the dbs to make sure they are the same
 			var source = new Database("TEST_SOURCE");
-			source.Connection = TestHelper.GetConnString("TEST_SOURCE");
+			source.ConnectionString = TestHelper.GetConnString("TEST_SOURCE");
 			source.Load();
 			copy.Load();
 			TestCompare(source, copy);
 		}
 
 		private static void TestCompare(Database source, Database copy) {
-			//compare the dbs to make sure they are the same                        
+			//compare the dbs to make sure they are the same
 			Assert.IsFalse(source.Compare(copy).IsDiff);
 
 			// get a second opinion
@@ -81,10 +81,10 @@ namespace test {
 
 			//load the model from newly created db and check collation
 			var copy = new Database("TEST_COPY");
-			copy.Connection = TestHelper.GetConnString("TEST_SOURCE");
+			copy.ConnectionString = TestHelper.GetConnString("TEST_SOURCE");
 			copy.Load();
 
-			Assert.AreEqual("SQL_Latin1_General_CP1_CI_AS", copy.FindProp("COLLATE").Value);
+			Assert.AreEqual("SQL_Latin1_General_CP1_CI_AS", copy.DbProperties.Find("COLLATE").Value);
 		}
 
 		[Test]
@@ -111,11 +111,11 @@ namespace test {
 			TestHelper.ExecBatchSql(script, "TEST_COPY");
 
 			var source = new Database("TEST_SOURCE");
-			source.Connection = TestHelper.GetConnString("TEST_SOURCE");
+			source.ConnectionString = TestHelper.GetConnString("TEST_SOURCE");
 			source.Load();
 
 			var copy = new Database("TEST_COPY");
-			copy.Connection = TestHelper.GetConnString("TEST_COPY");
+			copy.ConnectionString = TestHelper.GetConnString("TEST_COPY");
 			copy.Load();
 
 			//execute migration script to make SOURCE the same as COPY
@@ -177,25 +177,25 @@ namespace test {
 			TestHelper.ExecBatchSql(db.ScriptCreate(), "master");
 
 			var db2 = new Database();
-			db2.Connection = TestHelper.GetConnString("TEST_TEMP");
+			db2.ConnectionString = TestHelper.GetConnString("TEST_TEMP");
 			db2.Load();
 
 			TestHelper.DropDb("TEST_TEMP");
 
 			foreach (Table t in db.Tables) {
-				Assert.IsNotNull(db2.FindTable(t.Name, t.Owner));
-				Assert.IsFalse(db2.FindTable(t.Name, t.Owner).Compare(t).IsDiff);
+				Assert.IsNotNull(db2.Tables.Find(t.Name, t.Owner));
+				Assert.IsFalse(db2.Tables.Find(t.Name, t.Owner).Compare(t).IsDiff);
 			}
 		}
 
 		[Test]
 		public void TestScriptDeletedProc() {
 			var source = new Database();
-			source.Routines.Add("dbo", "test");
-			source.FindRoutine("test", "dbo").Type = "PROCEDURE";
-			source.FindRoutine("test", "dbo").Text = @"
+			source.Routines.Add(new Routine("dbo", "test"));
+			source.Routines.Find("test", "dbo").Type = "PROCEDURE";
+			source.Routines.Find("test", "dbo").Text = @"
 create procedure [dbo].[test]
-as 
+as
 select * from Table1
 ";
 
@@ -214,7 +214,7 @@ select * from Table1
 			policy.Constraints.Add(new Constraint("PK_Policy", "PRIMARY KEY", "id"));
 			policy.Constraints[0].Clustered = true;
 			policy.Constraints[0].Unique = true;
-			policy.Columns.Items[0].Identity = new Identity(1, 1);
+			policy.Columns.Items[0].Identity = new Identity("dbo", "Policy", "id", "1", "1");
 
 			var loc = new Table("dbo", "Location");
 			loc.Columns.Add(new Column("id", "int", false, null));
@@ -223,7 +223,7 @@ select * from Table1
 			loc.Constraints.Add(new Constraint("PK_Location", "PRIMARY KEY", "id"));
 			loc.Constraints[0].Clustered = true;
 			loc.Constraints[0].Unique = true;
-			loc.Columns.Items[0].Identity = new Identity(1, 1);
+			loc.Columns.Items[0].Identity = new Identity("dbo", "Location", "id", "1", "1");
 
 			var formType = new Table("dbo", "FormType");
 			formType.Columns.Add(new Column("code", "tinyint", false, null));
@@ -253,37 +253,37 @@ select * from Table1
 			db.Tables.Add(loc);
 			db.ForeignKeys.Add(fk_policy_formType);
 			db.ForeignKeys.Add(fk_location_policy);
-			db.FindProp("COMPATIBILITY_LEVEL").Value = "90";
-			db.FindProp("COLLATE").Value = "SQL_Latin1_General_CP1_CI_AS";
-			db.FindProp("AUTO_CLOSE").Value = "OFF";
-			db.FindProp("AUTO_SHRINK").Value = "ON";
-			db.FindProp("ALLOW_SNAPSHOT_ISOLATION").Value = "ON";
-			db.FindProp("READ_COMMITTED_SNAPSHOT").Value = "OFF";
-			db.FindProp("RECOVERY").Value = "SIMPLE";
-			db.FindProp("PAGE_VERIFY").Value = "CHECKSUM";
-			db.FindProp("AUTO_CREATE_STATISTICS").Value = "ON";
-			db.FindProp("AUTO_UPDATE_STATISTICS").Value = "ON";
-			db.FindProp("AUTO_UPDATE_STATISTICS_ASYNC").Value = "ON";
-			db.FindProp("ANSI_NULL_DEFAULT").Value = "ON";
-			db.FindProp("ANSI_NULLS").Value = "ON";
-			db.FindProp("ANSI_PADDING").Value = "ON";
-			db.FindProp("ANSI_WARNINGS").Value = "ON";
-			db.FindProp("ARITHABORT").Value = "ON";
-			db.FindProp("CONCAT_NULL_YIELDS_NULL").Value = "ON";
-			db.FindProp("NUMERIC_ROUNDABORT").Value = "ON";
-			db.FindProp("QUOTED_IDENTIFIER").Value = "ON";
-			db.FindProp("RECURSIVE_TRIGGERS").Value = "ON";
-			db.FindProp("CURSOR_CLOSE_ON_COMMIT").Value = "ON";
-			db.FindProp("CURSOR_DEFAULT").Value = "LOCAL";
-			db.FindProp("TRUSTWORTHY").Value = "ON";
-			db.FindProp("DB_CHAINING").Value = "ON";
-			db.FindProp("PARAMETERIZATION").Value = "FORCED";
-			db.FindProp("DATE_CORRELATION_OPTIMIZATION").Value = "ON";
+			db.DbProperties.Find("COMPATIBILITY_LEVEL").Value = "90";
+			db.DbProperties.Find("COLLATE").Value = "SQL_Latin1_General_CP1_CI_AS";
+			db.DbProperties.Find("AUTO_CLOSE").Value = "OFF";
+			db.DbProperties.Find("AUTO_SHRINK").Value = "ON";
+			db.DbProperties.Find("ALLOW_SNAPSHOT_ISOLATION").Value = "ON";
+			db.DbProperties.Find("READ_COMMITTED_SNAPSHOT").Value = "OFF";
+			db.DbProperties.Find("RECOVERY").Value = "SIMPLE";
+			db.DbProperties.Find("PAGE_VERIFY").Value = "CHECKSUM";
+			db.DbProperties.Find("AUTO_CREATE_STATISTICS").Value = "ON";
+			db.DbProperties.Find("AUTO_UPDATE_STATISTICS").Value = "ON";
+			db.DbProperties.Find("AUTO_UPDATE_STATISTICS_ASYNC").Value = "ON";
+			db.DbProperties.Find("ANSI_NULL_DEFAULT").Value = "ON";
+			db.DbProperties.Find("ANSI_NULLS").Value = "ON";
+			db.DbProperties.Find("ANSI_PADDING").Value = "ON";
+			db.DbProperties.Find("ANSI_WARNINGS").Value = "ON";
+			db.DbProperties.Find("ARITHABORT").Value = "ON";
+			db.DbProperties.Find("CONCAT_NULL_YIELDS_NULL").Value = "ON";
+			db.DbProperties.Find("NUMERIC_ROUNDABORT").Value = "ON";
+			db.DbProperties.Find("QUOTED_IDENTIFIER").Value = "ON";
+			db.DbProperties.Find("RECURSIVE_TRIGGERS").Value = "ON";
+			db.DbProperties.Find("CURSOR_CLOSE_ON_COMMIT").Value = "ON";
+			db.DbProperties.Find("CURSOR_DEFAULT").Value = "LOCAL";
+			db.DbProperties.Find("TRUSTWORTHY").Value = "ON";
+			db.DbProperties.Find("DB_CHAINING").Value = "ON";
+			db.DbProperties.Find("PARAMETERIZATION").Value = "FORCED";
+			db.DbProperties.Find("DATE_CORRELATION_OPTIMIZATION").Value = "ON";
 
-			db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+			db.ConnectionString = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
 			db.ExecCreate(true);
 
-			DBHelper.ExecSql(db.Connection,
+			DBHelper.ExecSql(db.ConnectionString,
 				"  insert into formType ([code], [desc]) values (1, 'DP-1')\n"
 				+ "insert into formType ([code], [desc]) values (2, 'DP-2')\n"
 				+ "insert into formType ([code], [desc]) values (3, 'DP-3')");
@@ -309,7 +309,7 @@ select * from Table1
 
 			var copy = new Database("ScriptToDirTestCopy");
 			copy.Dir = db.Dir;
-			copy.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + copy.Name);
+			copy.ConnectionString = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + copy.Name);
 			copy.CreateFromDir(true);
 			copy.Load();
 			TestCompare(db, copy);

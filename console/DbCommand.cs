@@ -33,20 +33,21 @@ namespace console {
 		}
 
 		protected Database CreateDatabase() {
-			var builder = new SqlConnectionStringBuilder() {
+			bool integratedSecurity = string.IsNullOrEmpty(User);
+			var builder = new SqlConnectionStringBuilder {
 				DataSource = Server,
 				InitialCatalog = DbName,
-				IntegratedSecurity = String.IsNullOrEmpty(User)
+				IntegratedSecurity = integratedSecurity
 			};
-			if (!builder.IntegratedSecurity){
+			if (!integratedSecurity){
 				builder.UserID = User;
 				builder.Password = Pass;
 			}
-			return new Database() {
-				Connection = builder.ToString(),
+			return new Database {
+				ConnectionString = builder.ToString(),
 				Dir = ScriptDir
 			};
-			
+
 		}
 
 	}

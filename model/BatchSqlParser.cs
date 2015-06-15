@@ -2,14 +2,6 @@
 using System.Text.RegularExpressions;
 
 namespace model {
-	internal enum State {
-		Searching,
-		InOneLineComment,
-		InMultiLineComment,
-		InBrackets,
-		InQuotes
-	}
-
 	public class BatchSqlParser {
 		private static bool IsWhitespace(char c) {
 			return Regex.Match(c.ToString(), "\\s", RegexOptions.Multiline).Success;

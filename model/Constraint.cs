@@ -1,16 +1,18 @@
 ﻿using System.Collections.Generic;
 
 namespace model {
-	public class Constraint {
+	public class Constraint : Attachable {
 		public bool Clustered;
 		public List<string> Columns = new List<string>();
 		public List<string> IncludedColumns = new List<string>();
+		public string TableName;
+		public string SchemaName;
 		public string Name;
 		public Table Table;
 		public string Type;
 		public bool Unique;
 
-		public Constraint(string name, string type, string columns) {
+		public Constraint(string name, string type, string columns = null) {
 			Name = name;
 			Type = type;
 			if (!string.IsNullOrEmpty(columns)) {
@@ -44,6 +46,12 @@ namespace model {
 			}
 			return string.Format("CONSTRAINT [{0}] {1} {2} ([{3}])",
 				Name, Type, ClusteredText, string.Join("], [", Columns.ToArray()));
+		}
+
+		public override void Attach() {
+			Table t = Database.Tables.Find(TableName, SchemaName);
+			Table = t;
+			t.Constraints.Add(this);
 		}
 	}
 }

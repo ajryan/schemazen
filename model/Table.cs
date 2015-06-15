@@ -6,19 +6,7 @@ using System.Linq;
 using System.Text;
 
 namespace model {
-	public class Schema
-	{
-		public string Name;
-		public string Owner;
-
-		public Schema(string name, string owner)
-		{
-			Owner = owner;
-			Name = name;
-		}
-	}
-
-	public class Table : IScriptable {
+	public class Table : Scriptable {
 		public ColumnList Columns = new ColumnList();
 		public List<Constraint> Constraints = new List<Constraint>();
 		public string Name;
@@ -29,7 +17,7 @@ namespace model {
 			Name = name;
 		}
 
-		public string BaeFileName {
+		public override string BaseFileName {
 			get { return string.Format("{0}.{1}", Owner, Name); }
 		}
 
@@ -98,7 +86,7 @@ namespace model {
 			return diff;
 		}
 
-		public string ScriptCreate() {
+		public override string ScriptCreate() {
 			var text = new StringBuilder();
 			text.AppendFormat("CREATE TABLE [{0}].[{1}](\r\n", Owner, Name);
 			text.Append(Columns.Script());
@@ -195,42 +183,6 @@ namespace model {
 				default:
 					return val;
 			}
-		}
-	}
-
-	public class TableDiff {
-		public List<Column> ColumnsAdded = new List<Column>();
-		public List<ColumnDiff> ColumnsDiff = new List<ColumnDiff>();
-		public List<Column> ColumnsDroped = new List<Column>();
-
-		public List<Constraint> ConstraintsAdded = new List<Constraint>();
-		public List<Constraint> ConstraintsChanged = new List<Constraint>();
-		public List<Constraint> ConstraintsDeleted = new List<Constraint>();
-		public string Name;
-		public string Owner;
-
-		public bool IsDiff {
-			get {
-				return ColumnsAdded.Count + ColumnsDroped.Count + ColumnsDiff.Count + ConstraintsAdded.Count +
-				       ConstraintsChanged.Count + ConstraintsDeleted.Count > 0;
-			}
-		}
-
-		public string Script() {
-			var text = new StringBuilder();
-
-			foreach (Column c in ColumnsAdded) {
-				text.AppendFormat("ALTER TABLE [{0}].[{1}] ADD {2}\r\n", Owner, Name, c.Script());
-			}
-
-			foreach (Column c in ColumnsDroped) {
-				text.AppendFormat("ALTER TABLE [{0}].[{1}] DROP COLUMN [{2}]\r\n", Owner, Name, c.Name);
-			}
-
-			foreach (ColumnDiff c in ColumnsDiff) {
-				text.AppendFormat("ALTER TABLE [{0}].[{1}] ALTER COLUMN {2}\r\n", Owner, Name, c.Script());
-			}
-			return text.ToString();
 		}
 	}
 }
