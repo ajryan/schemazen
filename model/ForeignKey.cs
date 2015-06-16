@@ -3,62 +3,51 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace model {
-	public class ForeignKey : Scriptable {
+	public class ForeignKey : Attachable {
 		public bool Check;
 		public List<string> Columns = new List<string>();
 		public string Name;
 		public string OnDelete;
 		public string OnUpdate;
 		public List<string> RefColumns = new List<string>();
-		public Table RefTable;
-		public Table Table;
+		public string RefTableName;
+		public string RefTableOwner;
+		public string TableName;
+		public string TableOwner;
 
-		public ForeignKey(string name) {
+		public ForeignKey(string tableName, string tableOwner, string name, string onUpdate, string onDelete, bool isDisabled,
+			string columns = null, string refTableName = null, string refTableOwner = null, string refColumns = null) {
+			TableName = tableName;
+			TableOwner = tableOwner;
 			Name = name;
-		}
-
-		public ForeignKey(Table table, string name, string columns, Table refTable, string refColumns)
-			: this(table, name, columns, refTable, refColumns, "", "") {
-		}
-
-		public ForeignKey(Table table, string name, string columns, Table refTable, string refColumns, string onUpdate,
-			string onDelete) {
-			Table = table;
-			Name = name;
-			Columns = new List<string>(columns.Split(','));
-			RefTable = refTable;
-			RefColumns = new List<string>(refColumns.Split(','));
 			OnUpdate = onUpdate;
 			OnDelete = onDelete;
+			Check = !isDisabled;
+			Columns = new List<string>(columns.Split(','));
+			RefTableName = refTableName;
+			RefTableOwner = refTableOwner;
+			RefColumns = new List<string>(refColumns.Split(','));
 		}
 
-		public string CheckText {
-			get { return Check ? "CHECK" : "NOCHECK"; }
-		}
+		public string CheckText => Check ? "CHECK" : "NOCHECK";
 
 		private void AssertArgNotNull(object arg, string argName) {
 			if (arg == null) {
-				throw new ArgumentNullException(String.Format(
-					"Unable to Script FK {0}. {1} must not be null.",
-					Name, argName));
+				throw new ArgumentNullException($"Unable to Script FK {Name}. {argName} must not be null.");
 			}
 		}
 
-		public override string BaseFileName {
-			get { return string.Format("{0}.{1}", Table.Owner, Table.Name); }
-		}
-
-		public override string ScriptCreate() {
-			AssertArgNotNull(Table, "Table");
+		public string ScriptCreate() {
+			AssertArgNotNull(TableName, "TableName");
 			AssertArgNotNull(Columns, "Columns");
-			AssertArgNotNull(RefTable, "RefTable");
+			AssertArgNotNull(RefTableName, "RefTableName");
 			AssertArgNotNull(RefColumns, "RefColumns");
 
 			var text = new StringBuilder();
-			text.AppendFormat("ALTER TABLE [{0}].[{1}] WITH {2} ADD CONSTRAINT [{3}]\r\n", Table.Owner, Table.Name, CheckText,
+			text.AppendFormat("ALTER TABLE [{0}].[{1}] WITH {2} ADD CONSTRAINT [{3}]\r\n", TableOwner, TableName, CheckText,
 				Name);
 			text.AppendFormat("   FOREIGN KEY([{0}]) REFERENCES [{1}].[{2}] ([{3}])\r\n", string.Join("], [", Columns.ToArray()),
-				RefTable.Owner, RefTable.Name, string.Join("], [", RefColumns.ToArray()));
+				RefTableOwner, RefTableName, string.Join("], [", RefColumns.ToArray()));
 			if (!string.IsNullOrEmpty(OnUpdate)) {
 				text.AppendFormat("   ON UPDATE {0}\r\n", OnUpdate);
 			}
@@ -67,13 +56,18 @@ namespace model {
 			}
 			if (!Check) {
 				text.AppendFormat("   ALTER TABLE [{0}].[{1}] NOCHECK CONSTRAINT [{2}]\r\n",
-					Table.Owner, Table.Name, Name);
+					TableOwner, TableName, Name);
 			}
 			return text.ToString();
 		}
 
 		public string ScriptDrop() {
-			return string.Format("ALTER TABLE [{0}].[{1}] DROP CONSTRAINT [{2}]\r\n", Table.Owner, Table.Name, Name);
+			return $"ALTER TABLE [{TableOwner}].[{TableName}] DROP CONSTRAINT [{Name}]\r\n";
+		}
+
+		public override void Attach() {
+			var table = Database.Tables.Find(TableName, TableOwner);
+			// TODO: table.ForeignKeys.Add(this);
 		}
 	}
 }

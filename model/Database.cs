@@ -73,6 +73,7 @@ namespace model {
 			var identities = new IdentityCollection(this);
 			var defaults = new DefaultCollection(this);
 			var indexes = new ConstraintCollection(this);
+			var fkColumns = new ForeignKeyColumnCollection(this);
 
 			Task.WaitAll(
 				DbProperties.LoadAsync(),
@@ -81,72 +82,16 @@ namespace model {
 				columns.LoadAsync(),
 				identities.LoadAsync(),
 				defaults.LoadAsync(),
-				indexes.LoadAsync());
+				indexes.LoadAsync(),
+				ForeignKeys.LoadAsync(),
+				fkColumns.LoadAsync());
 
 			columns.Attach();
 			identities.Attach();
 			defaults.Attach();
 			indexes.Attach();
-
-			//		//get foreign keys
-			//var fkEvent = ExecuteQueryAsync(
-			//	@"select
-			//			TABLE_SCHEMA,
-			//			TABLE_NAME,
-			//			CONSTRAINT_NAME
-			//		from INFORMATION_SCHEMA.TABLE_CONSTRAINTS
-			//		where CONSTRAINT_TYPE = 'FOREIGN KEY'",
-			//	dr => {
-			//		Table t = Tables.Find((string) dr["TABLE_NAME"], (string) dr["TABLE_SCHEMA"]);
-			//		var fk = new ForeignKey((string) dr["CONSTRAINT_NAME"]) { Table = t };
-			//		ForeignKeys.Add(fk);
-			//	});
-
-			//		//get foreign key props
-			//var fkPropsEvent = ExecuteQueryAsync(
-			//	@"select
-			//		CONSTRAINT_NAME,
-			//		UPDATE_RULE,
-			//		DELETE_RULE,
-			//		fk.is_disabled
-			//	from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
-			//		inner join sys.foreign_keys fk on rc.CONSTRAINT_NAME = fk.name",
-			//	dr => {
-			//		ForeignKey fk = ForeignKeys.Find((string) dr["CONSTRAINT_NAME"]);
-			//		fk.OnUpdate = (string) dr["UPDATE_RULE"];
-			//		fk.OnDelete = (string) dr["DELETE_RULE"];
-			//		fk.Check = !(bool) dr["is_disabled"];
-			//	});
-
-			//		//get foreign key columns and ref table
-			//var fkRefEvent = ExecuteQueryAsync(
-			//	@"select
-			//	fk.name as CONSTRAINT_NAME,
-			//	c1.name as COLUMN_NAME,
-			//	OBJECT_SCHEMA_NAME(fk.referenced_object_id) as REF_TABLE_SCHEMA,
-			//	OBJECT_NAME(fk.referenced_object_id) as REF_TABLE_NAME,
-			//	c2.name as REF_COLUMN_NAME
-			//from sys.foreign_keys fk
-			//inner join sys.foreign_key_columns fkc
-			//	on fkc.constraint_object_id = fk.object_id
-			//inner join sys.columns c1
-			//	on fkc.parent_column_id = c1.column_id
-			//	and fkc.parent_object_id = c1.object_id
-			//inner join sys.columns c2
-			//	on fkc.referenced_column_id = c2.column_id
-			//	and fkc.referenced_object_id = c2.object_id
-			//order by fk.name",
-			//	dr => {
-			//		ForeignKey fk = ForeignKeys.Find((string) dr["CONSTRAINT_NAME"]);
-			//		if (fk == null) {
-			//			return;
-			//		}
-			//		fk.Columns.Add((string) dr["COLUMN_NAME"]);
-			//		fk.RefColumns.Add((string) dr["REF_COLUMN_NAME"]);
-			//		if (fk.RefTable == null) {
-			//			fk.RefTable = Tables.Find((string) dr["REF_TABLE_NAME"], (string) dr["REF_TABLE_SCHEMA"]);
-			//		}
-			//	});
+			ForeignKeys.Attach();
+			fkColumns.Attach();
 
 			//		//get routines
 			//var routinesEvent = ExecuteQueryAsync(

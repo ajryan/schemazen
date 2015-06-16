@@ -7,8 +7,8 @@ using System.Text;
 
 namespace model {
 	public class Table : Scriptable {
-		public ColumnList Columns = new ColumnList();
-		public List<Constraint> Constraints = new List<Constraint>();
+		public ColumnList Columns = new ColumnList();	// TODO: Use ColumnCollection
+		public List<Constraint> Constraints = new List<Constraint>();	// TODO: Use ConstraintCollection
 		public string Name;
 		public string Owner;
 

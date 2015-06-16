@@ -73,6 +73,8 @@
     <Compile Include="Default.cs" />
     <Compile Include="BatchSqlFileException.cs" />
     <Compile Include="ForeignKey.cs" />
+    <Compile Include="ForeignKeyColumn.cs" />
+    <Compile Include="ForeignKeyColumnCollection.cs" />
     <Compile Include="IdentityCollection.cs" />
     <Compile Include="ForeignKeyCollection.cs" />
     <Compile Include="Identity.cs" />
