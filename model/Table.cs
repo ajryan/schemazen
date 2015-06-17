@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
@@ -7,43 +6,34 @@ using System.Text;
 
 namespace model {
 	public class Table : Scriptable {
-		public ColumnList Columns = new ColumnList();	// TODO: Use ColumnCollection
-		public List<Constraint> Constraints = new List<Constraint>();	// TODO: Use ConstraintCollection
 		public string Name;
 		public string Owner;
+
+		public ColumnCollection Columns { get; }
+		public ConstraintCollection Constraints { get; }
+		public ForeignKeyCollection ForeignKeys { get; }
 
 		public Table(string owner, string name) {
 			Owner = owner;
 			Name = name;
+
+			Columns = new ColumnCollection(this);
+			Constraints = new ConstraintCollection(this);
+			ForeignKeys = new ForeignKeyCollection(this);
 		}
 
-		public override string BaseFileName {
-			get { return string.Format("{0}.{1}", Owner, Name); }
-		}
+		public override string BaseFileName => $"{Owner}.{Name}";
 
-		public Constraint PrimaryKey {
-			get {
-				foreach (Constraint c in Constraints) {
-					if (c.Type == "PRIMARY KEY") return c;
-				}
-				return null;
-			}
-		}
-
-		public Constraint FindConstraint(string name) {
-			foreach (Constraint c in Constraints) {
-				if (c.Name == name) return c;
-			}
-			return null;
-		}
+		public Constraint PrimaryKey => Constraints.FirstOrDefault(c => c.Type == "PRIMARY KEY");
 
 		public TableDiff Compare(Table t) {
-			var diff = new TableDiff();
-			diff.Owner = t.Owner;
-			diff.Name = t.Name;
+			var diff = new TableDiff {
+				Owner = t.Owner,
+				Name = t.Name
+			};
 
 			//get additions and compare mutual columns
-			foreach (Column c in Columns.Items) {
+			foreach (Column c in Columns) {
 				Column c2 = t.Columns.Find(c.Name);
 				if (c2 == null) {
 					diff.ColumnsAdded.Add(c);
@@ -58,7 +48,7 @@ namespace model {
 			}
 
 			//get deletions
-			foreach (Column c in t.Columns.Items) {
+			foreach (Column c in t.Columns) {
 				if (Columns.Find(c.Name) == null) {
 					diff.ColumnsDroped.Add(c);
 				}
@@ -66,7 +56,7 @@ namespace model {
 
 			//get added and compare mutual constraints
 			foreach (Constraint c in Constraints) {
-				Constraint c2 = t.FindConstraint(c.Name);
+				Constraint c2 = t.Constraints.Find(c.Name);
 				if (c2 == null) {
 					diff.ConstraintsAdded.Add(c);
 				}
@@ -78,7 +68,7 @@ namespace model {
 			}
 			//get deleted constraints
 			foreach (Constraint c in t.Constraints) {
-				if (FindConstraint(c.Name) == null) {
+				if (Constraints.Find(c.Name) == null) {
 					diff.ConstraintsDeleted.Add(c);
 				}
 			}
@@ -89,7 +79,7 @@ namespace model {
 		public override string ScriptCreate() {
 			var text = new StringBuilder();
 			text.AppendFormat("CREATE TABLE [{0}].[{1}](\r\n", Owner, Name);
-			text.Append(Columns.Script());
+			text.Append(Columns.ScriptAll());
 			if (Constraints.Count > 0) text.AppendLine();
 			foreach (Constraint c in Constraints) {
 				if (c.Type == "INDEX") continue;
@@ -112,7 +102,7 @@ namespace model {
 			var data = new StringBuilder();
 			var sql = new StringBuilder();
 			sql.Append("select ");
-			foreach (Column c in Columns.Items) {
+			foreach (Column c in Columns) {
 				sql.AppendFormat("[{0}],", c.Name);
 			}
 			sql.Remove(sql.Length - 1, 1);
@@ -123,7 +113,7 @@ namespace model {
 					cm.CommandText = sql.ToString();
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
-							foreach (Column c in Columns.Items) {
+							foreach (Column c in Columns) {
 								data.AppendFormat("{0}\t", dr[c.Name]);
 							}
 							data.Remove(data.Length - 1, 1);
@@ -138,7 +128,7 @@ namespace model {
 
 		public void ImportData(string conn, string data) {
 			var dt = new DataTable();
-			foreach (Column c in Columns.Items) {
+			foreach (Column c in Columns) {
 				dt.Columns.Add(new DataColumn(c.Name));
 			}
 			string[] lines = data.Split("\r\n".Split(','), StringSplitOptions.RemoveEmptyEntries);
@@ -146,23 +136,23 @@ namespace model {
 				string line = lines[i];
 				DataRow row = dt.NewRow();
 				string[] fields = line.Split('\t');
-				if (fields.Length != Columns.Items.Count) {
+				if (fields.Length != Columns.Count) {
 					throw new DataException("Incorrect number of columns", i + 1);
 				}
 				for (int j = 0; j < fields.Length; j++) {
 					try {
-						row[j] = ConvertType(Columns.Items[j].Type, fields[j]);
+						row[j] = ConvertType(Columns[j].Type, fields[j]);
 					}
 					catch (FormatException ex) {
-						throw new DataException(String.Format("{0} at column {1}", ex.Message, j + 1), i + 1);
+						throw new DataException($"{ex.Message} at column {j + 1}", i + 1);
 					}
 				}
 				dt.Rows.Add(row);
 			}
 
-			var bulk = new SqlBulkCopy(conn,
-				SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
-			bulk.DestinationTableName = Name;
+			var bulk = new SqlBulkCopy(conn, SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock) {
+					DestinationTableName = Name
+				};
 			bulk.WriteToServer(dt);
 		}
 
@@ -178,7 +168,7 @@ namespace model {
 				case "smalldatetime":
 					return DateTime.Parse(val);
 				case "int":
-					int.Parse(val);
+					Int32.Parse(val);
 					return val;
 				default:
 					return val;

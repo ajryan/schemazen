@@ -9,16 +9,28 @@ namespace model
 	public abstract class DatabaseObjectCollection<T> : IEnumerable<T>
 		where T : DatabaseObject {
 		private readonly List<T> _list = new List<T>();
+		private Database _database;
 
-		protected Database Database { get; set; }
+		public Database Database {
+			get { return _database ?? Parent?.Database; }
+			private set { _database = value; }
+		}
+
+		private DatabaseObject Parent { get; }
 
 		protected DatabaseObjectCollection(Database db) {
 			Database = db;
 		}
 
+		protected DatabaseObjectCollection(DatabaseObject parent) {
+			Parent = parent;
+		}
+
 		public int Count => _list.Count;
 
 		public void Add(T obj) {
+			// TODO: Table has Database on its constructor now, so this is redundant....
+			//       Why are tables being created without db?
 			obj.Database = Database;
 			_list.Add(obj);
 		}
@@ -28,6 +40,8 @@ namespace model
 		}
 
 		public abstract Task LoadAsync();
+
+		public T this[int i] => _list[i];
 
 		public IEnumerator<T> GetEnumerator() {
 			return _list.GetEnumerator();
@@ -43,6 +57,8 @@ namespace model
 
 		protected Task ExecuteQueryAsync(string query, Action<SqlCommand> cmdSetupAction, Action<SqlDataReader> readerAction) {
 			return Task.Run(async () => {
+				Console.WriteLine($"{Database.Name}: Execute query in {typeof(T).Name}");
+
 				using (var cn = new SqlConnection(Database.ConnectionString)) {
 					cn.Open();
 

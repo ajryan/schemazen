@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using ManyConsole;
 using model;
 using NDesk.Options;
@@ -24,12 +25,13 @@ namespace console {
 		}
 
 		public override int Run(string[] remainingArguments) {
-			var sourceDb = new Database();
-			var targetDb = new Database();
-			sourceDb.ConnectionString = _source;
-			targetDb.ConnectionString = _target;
-			sourceDb.Load();
-			targetDb.Load();
+			var sourceDb = new Database("Source") { ConnectionString = _source };
+			var targetDb = new Database("Target") { ConnectionString = _target };
+
+			Task.WaitAll(
+				Task.Factory.StartNew(() => sourceDb.Load()),
+				Task.Factory.StartNew(() => targetDb.Load()));
+
 			DatabaseDiff diff = sourceDb.Compare(targetDb);
 			if (diff.IsDiff) {
 				Console.WriteLine("Databases are different.");

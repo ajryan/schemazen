@@ -1,9 +1,20 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace model
 {
 	public class ColumnCollection : AttachableCollection<Column> {
 		public ColumnCollection(Database db) : base(db) {}
+		public ColumnCollection(DatabaseObject parent)  : base(parent) { }
+
+		public Column Find(string name) {
+			return this.FirstOrDefault(c => c.Name == name);
+		}
+
+		public string ScriptAll() {
+			return string.Join($",{Environment.NewLine}", this.Select(c => c.Script()));
+		}
 
 		public override Task LoadAsync() {
 			return ExecuteQueryAsync(

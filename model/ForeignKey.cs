@@ -3,30 +3,31 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace model {
-	public class ForeignKey : Attachable {
+	public class ForeignKey : Scriptable {
 		public bool Check;
-		public List<string> Columns = new List<string>();
+		public List<string> Columns;
 		public string Name;
 		public string OnDelete;
 		public string OnUpdate;
-		public List<string> RefColumns = new List<string>();
+		public List<string> RefColumns;
 		public string RefTableName;
 		public string RefTableOwner;
 		public string TableName;
 		public string TableOwner;
 
-		public ForeignKey(string tableName, string tableOwner, string name, string onUpdate, string onDelete, bool isDisabled,
-			string columns = null, string refTableName = null, string refTableOwner = null, string refColumns = null) {
+		public ForeignKey(string tableName, string tableOwner, string name,
+			string onUpdate = "", string onDelete = "", bool isDisabled = false,
+			string columns = "", string refTableName = "", string refTableOwner = "", string refColumns = "") {
 			TableName = tableName;
 			TableOwner = tableOwner;
 			Name = name;
 			OnUpdate = onUpdate;
 			OnDelete = onDelete;
 			Check = !isDisabled;
-			Columns = new List<string>(columns.Split(','));
+			Columns = new List<string>(columns.Split(new [] { ',' }, StringSplitOptions.RemoveEmptyEntries));
 			RefTableName = refTableName;
 			RefTableOwner = refTableOwner;
-			RefColumns = new List<string>(refColumns.Split(','));
+			RefColumns = new List<string>(refColumns.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries));
 		}
 
 		public string CheckText => Check ? "CHECK" : "NOCHECK";
@@ -37,7 +38,9 @@ namespace model {
 			}
 		}
 
-		public string ScriptCreate() {
+		public override string BaseFileName => $"{TableOwner}.{TableName}.ForeignKeys";
+
+		public override string ScriptCreate() {
 			AssertArgNotNull(TableName, "TableName");
 			AssertArgNotNull(Columns, "Columns");
 			AssertArgNotNull(RefTableName, "RefTableName");
@@ -63,11 +66,6 @@ namespace model {
 
 		public string ScriptDrop() {
 			return $"ALTER TABLE [{TableOwner}].[{TableName}] DROP CONSTRAINT [{Name}]\r\n";
-		}
-
-		public override void Attach() {
-			var table = Database.Tables.Find(TableName, TableOwner);
-			// TODO: table.ForeignKeys.Add(this);
 		}
 	}
 }

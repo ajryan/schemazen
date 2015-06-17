@@ -5,6 +5,8 @@ namespace test {
 	[TestFixture]
 	public class ForeignKeyTester {
 		public void TestMultiColumnKey() {
+			var db = new Database("TESTDB");
+
 			var t1 = new Table("dbo", "t1");
 			t1.Columns.Add(new Column("c2", "varchar", 10, false, null));
 			t1.Columns.Add(new Column("c1", "int", false, null));
@@ -15,9 +17,8 @@ namespace test {
 			t2.Columns.Add(new Column("c2", "varchar", 10, false, null));
 			t2.Columns.Add(new Column("c3", "int", false, null));
 
-			var fk = new ForeignKey(t2, "fk_test", "c3,c2", t1, "c1,c2");
+			var fk = new ForeignKey(t2.Name, t2.Owner, "fk_test", "c3,c2", null, false, "c1,c2", t1.Name, t1.Owner);
 
-			var db = new Database("TESTDB");
 			db.Tables.Add(t1);
 			db.Tables.Add(t2);
 			db.ForeignKeys.Add(fk);
@@ -35,6 +36,8 @@ namespace test {
 
 		[Test]
 		public void TestScript() {
+			var db = new Database();
+
 			var person = new Table("dbo", "Person");
 			person.Columns.Add(new Column("id", "int", false, null));
 			person.Columns.Add(new Column("name", "varchar", 50, false, null));
@@ -51,7 +54,7 @@ namespace test {
 			address.Columns.Find("id").Identity = new Identity("dbo", "Address", "id", "1", "1");
 			address.Constraints.Add(new Constraint("PK_Address", "PRIMARY KEY", "id"));
 
-			var fk = new ForeignKey(address, "FK_Address_Person", "personId", person, "id", "", "CASCADE");
+			var fk = new ForeignKey(address.Name, address.Owner, "FK_Address_Person", "", "CASCADE", false, "personId", person.Name, person.Owner, "id");
 
 			TestHelper.ExecSql(person.ScriptCreate(), "");
 			TestHelper.ExecSql(address.ScriptCreate(), "");

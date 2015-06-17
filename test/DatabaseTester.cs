@@ -157,17 +157,17 @@ namespace test {
 			t1.Columns.Add(new Column("col1", "int", false, null));
 			t1.Columns.Add(new Column("col2", "int", false, null));
 			t1.Constraints.Add(new Constraint("pk_t1", "PRIMARY KEY", "col1,col2"));
-			t1.FindConstraint("pk_t1").Clustered = true;
+			t1.Constraints.Find("pk_t1").Clustered = true;
 
-			var t2 = new Table("dbo", "t2");
+			var t2 = new Table( "dbo", "t2");
 			t2.Columns.Add(new Column("col1", "int", false, null));
 			t2.Columns.Add(new Column("col2", "int", false, null));
 			t2.Columns.Add(new Column("col3", "int", false, null));
 			t2.Constraints.Add(new Constraint("pk_t2", "PRIMARY KEY", "col1"));
-			t2.FindConstraint("pk_t2").Clustered = true;
+			t2.Constraints.Find("pk_t2").Clustered = true;
 			t2.Constraints.Add(new Constraint("IX_col3", "UNIQUE", "col3"));
 
-			db.ForeignKeys.Add(new ForeignKey(t2, "fk_t2_t1", "col2,col3", t1, "col1,col2"));
+			db.ForeignKeys.Add(new ForeignKey(t2.Name, t2.Owner, "fk_t2_t1", "col2,col3", null, false, "col1,col2", t1.Name, t1.Owner));
 
 			db.Tables.Add(t1);
 			db.Tables.Add(t2);
@@ -208,13 +208,15 @@ select * from Table1
 
 		[Test]
 		public void TestScriptToDir() {
+			var db = new Database("ScriptToDirTest");
+
 			var policy = new Table("dbo", "Policy");
 			policy.Columns.Add(new Column("id", "int", false, null));
 			policy.Columns.Add(new Column("form", "tinyint", false, null));
 			policy.Constraints.Add(new Constraint("PK_Policy", "PRIMARY KEY", "id"));
 			policy.Constraints[0].Clustered = true;
 			policy.Constraints[0].Unique = true;
-			policy.Columns.Items[0].Identity = new Identity("dbo", "Policy", "id", "1", "1");
+			policy.Columns[0].Identity = new Identity("dbo", "Policy", "id", "1", "1");
 
 			var loc = new Table("dbo", "Location");
 			loc.Columns.Add(new Column("id", "int", false, null));
@@ -223,7 +225,7 @@ select * from Table1
 			loc.Constraints.Add(new Constraint("PK_Location", "PRIMARY KEY", "id"));
 			loc.Constraints[0].Clustered = true;
 			loc.Constraints[0].Unique = true;
-			loc.Columns.Items[0].Identity = new Identity("dbo", "Location", "id", "1", "1");
+			loc.Columns[0].Identity = new Identity("dbo", "Location", "id", "1", "1");
 
 			var formType = new Table("dbo", "FormType");
 			formType.Columns.Add(new Column("code", "tinyint", false, null));
@@ -231,23 +233,22 @@ select * from Table1
 			formType.Constraints.Add(new Constraint("PK_FormType", "PRIMARY KEY", "code"));
 			formType.Constraints[0].Clustered = true;
 
-			var fk_policy_formType = new ForeignKey("FK_Policy_FormType");
-			fk_policy_formType.Table = policy;
+			var fk_policy_formType = new ForeignKey(policy.Name, policy.Owner, "FK_Policy_FormType");
+			fk_policy_formType.RefTableName = formType.Name;
+			fk_policy_formType.RefTableOwner = formType.Owner;
 			fk_policy_formType.Columns.Add("form");
-			fk_policy_formType.RefTable = formType;
 			fk_policy_formType.RefColumns.Add("code");
 			fk_policy_formType.OnUpdate = "NO ACTION";
 			fk_policy_formType.OnDelete = "NO ACTION";
 
-			var fk_location_policy = new ForeignKey("FK_Location_Policy");
-			fk_location_policy.Table = loc;
+			var fk_location_policy = new ForeignKey(loc.Name, loc.Owner, "FK_Location_Policy");
 			fk_location_policy.Columns.Add("policyId");
-			fk_location_policy.RefTable = policy;
+			fk_location_policy.RefTableName = policy.Name;
+			fk_location_policy.RefTableOwner = policy.Owner;
 			fk_location_policy.RefColumns.Add("id");
 			fk_location_policy.OnUpdate = "NO ACTION";
 			fk_location_policy.OnDelete = "CASCADE";
 
-			var db = new Database("ScriptToDirTest");
 			db.Tables.Add(policy);
 			db.Tables.Add(formType);
 			db.Tables.Add(loc);
@@ -303,7 +304,7 @@ select * from Table1
 				Assert.IsTrue(File.Exists(db.Name + "\\tables\\" + t.Name + ".sql"));
 			}
 			foreach (ForeignKey fk in db.ForeignKeys) {
-				var expected = db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql";
+				var expected = db.Name + "\\foreign_keys\\" + fk.TableName + ".sql";
 				Assert.IsTrue(File.Exists(expected), "File does not exist" + expected);
 			}
 

@@ -60,7 +60,6 @@
     <Compile Include="Column.cs" />
     <Compile Include="DefaultCollection.cs" />
     <Compile Include="ColumnDiff.cs" />
-    <Compile Include="ColumnList.cs" />
     <Compile Include="ConfigHelper.cs" />
     <Compile Include="Constraint.cs" />
     <Compile Include="Database.cs" />

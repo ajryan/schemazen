@@ -2,8 +2,9 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace model {
-	public class ForeignKeyCollection : AttachableCollection<ForeignKey> {
+	public class ForeignKeyCollection : DatabaseObjectCollection<ForeignKey> {
 		public ForeignKeyCollection(Database db) : base(db) { }
+		public ForeignKeyCollection(DatabaseObject parent) : base(parent) { }
 
 		public ForeignKey Find(string name) {
 			return this.FirstOrDefault(fk => fk.Name == name);
@@ -16,7 +17,7 @@ namespace model {
 						tc.TABLE_NAME,
 						tc.CONSTRAINT_NAME,
 						rc.UPDATE_RULE,
-						rc.DELETE_ROLE,
+						rc.DELETE_RULE,
 						fk.is_disabled
 					from INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
 						inner join INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc on rc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME

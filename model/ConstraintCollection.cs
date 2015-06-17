@@ -4,6 +4,11 @@ using System.Threading.Tasks;
 namespace model {
 	public class ConstraintCollection : AttachableCollection<Constraint> {
 		public ConstraintCollection(Database database) : base(database) {}
+		public ConstraintCollection(DatabaseObject parent) : base(parent) { }
+
+		public Constraint Find(string name) {
+			return this.FirstOrDefault(c => c.Name == name);
+		}
 
 		public override Task LoadAsync()
 		{

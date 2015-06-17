@@ -25,9 +25,10 @@ namespace test {
 
 		[Test]
 		public void TestCompare() {
+			var db = new Database();
+
 			var t1 = new Table("dbo", "Test");
 			var t2 = new Table("dbo", "Test");
-			TableDiff diff = default(TableDiff);
 
 			//test equal
 			t1.Columns.Add(new Column("first", "varchar", 30, false, null));
@@ -35,7 +36,7 @@ namespace test {
 			t1.Constraints.Add(new Constraint("PK_Test", "PRIMARY KEY", "first"));
 			t2.Constraints.Add(new Constraint("PK_Test", "PRIMARY KEY", "first"));
 
-			diff = t1.Compare(t2);
+			var diff = t1.Compare(t2);
 			Assert.IsNotNull(diff);
 			Assert.IsFalse(diff.IsDiff);
 
@@ -51,7 +52,7 @@ namespace test {
 			Assert.AreEqual(1, diff.ColumnsDroped.Count);
 
 			//test diff
-			t1.Columns.Items[0].Length = 20;
+			t1.Columns[0].Length = 20;
 			diff = t1.Compare(t2);
 			Assert.IsTrue(diff.IsDiff);
 			Assert.AreEqual(1, diff.ColumnsDiff.Count);

@@ -37,6 +37,9 @@ namespace model {
 					AsynchronousProcessing = true
 				};
 				_connectionString = cnStrBuilder.ConnectionString;
+
+				if (string.IsNullOrEmpty(Name))
+					Name = cnStrBuilder.InitialCatalog;
 			}
 		}
 
@@ -84,41 +87,14 @@ namespace model {
 				defaults.LoadAsync(),
 				indexes.LoadAsync(),
 				ForeignKeys.LoadAsync(),
-				fkColumns.LoadAsync());
+				fkColumns.LoadAsync(),
+				Routines.LoadAsync());
 
-			columns.Attach();
-			identities.Attach();
-			defaults.Attach();
-			indexes.Attach();
-			ForeignKeys.Attach();
-			fkColumns.Attach();
-
-			//		//get routines
-			//var routinesEvent = ExecuteQueryAsync(
-			//	@"select
-			//			s.name as schemaName,
-			//			o.name as routineName,
-			//			o.type_desc,
-			//			m.definition,
-			//                     m.uses_ansi_nulls,
-			//			m.uses_quoted_identifier,
-			//			t.name as tableName
-			//		from sys.sql_modules m
-			//			inner join sys.objects o on m.object_id = o.object_id
-			//			inner join sys.schemas s on s.schema_id = o.schema_id
-			//			left join sys.triggers tr on m.object_id = tr.object_id
-			//			left join sys.tables t on tr.parent_id = t.object_id",
-			//	dr => {
-			//		var r = new Routine((string) dr["schemaName"], (string) dr["routineName"]) {
-			//			Text = (string) dr["definition"],
-			//			AnsiNull = (bool) dr["uses_ansi_nulls"],
-			//			QuotedId = (bool) dr["uses_quoted_identifier"]
-			//		};
-
-			//		r.SetModuleType((string)dr["type_desc"]);
-
-			//		Routines.Add(r);
-			//	});
+			columns.AttachAll();
+			identities.AttachAll();
+			defaults.AttachAll();
+			indexes.AttachAll();
+			fkColumns.AttachAll();
 		}
 
 		public DatabaseDiff Compare(Database db) {
@@ -266,8 +242,9 @@ namespace model {
 			}
 
 			ScriptToSubdir(Tables, "tables");
-
-			ScriptToSubdir(ForeignKeys, "foreign_keys", true);
+			foreach (var t in Tables) {
+				ScriptToSubdir(t.ForeignKeys, "foreign_keys");
+			}
 
 			ScriptToSubdir(Routines.Where(r => r.Type == "PROCEDURE"), "procs");
 			ScriptToSubdir(Routines.Where(r => r.Type == "TRIGGER"), "triggers");
@@ -399,6 +376,7 @@ namespace model {
 						scripts.Remove(f);
 					}
 					catch (SqlBatchException ex) {
+						Console.WriteLine($"Script execution error: {ex.Message}");
 						errors.Add(new SqlFileException(f, ex));
 					}
 				}
