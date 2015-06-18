@@ -1,21 +1,25 @@
 ﻿using System;
-using ManyConsole;
+using FubuCore.CommandLine;
 
 namespace console {
 	internal class Program {
 
 		private static int Main(string[] args) {
 			try {
-				return ConsoleCommandDispatcher.DispatchCommand(
-				  new ConsoleCommand[] {
-					  new Script(), new Create(), new Compare()
-				  },
-				  args,
-				  Console.Out);
-			} catch (Exception ex) {
-				Console.WriteLine(ex.Message);
-				Console.WriteLine(ex.StackTrace);
-				return -1;
+				var factory = new CommandFactory();
+				factory.SetAppName("schemazen");
+				factory.RegisterCommands(typeof (Program).Assembly);
+
+				var executor = new CommandExecutor(factory);
+				return executor.Execute(args) ? 0 : 1;
+			}
+			catch (Exception ex) {
+				var commandEx = ex as CommandFailureException;
+
+				Console.ForegroundColor = ConsoleColor.Red;
+				ConsoleWriter.Write("ERROR: " + (commandEx?.Message ?? ex.ToString()));
+				Console.ResetColor();
+				return 1;
 			}
 		}
 	}

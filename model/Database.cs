@@ -215,7 +215,7 @@ namespace model {
 			return text.ToString();
 		}
 
-		public void ScriptToDir(bool overwrite) {
+		public void ScriptToDir() {
 			Directory.CreateDirectory(Dir);
 
 			// delete existing directory tree
@@ -242,10 +242,7 @@ namespace model {
 			}
 
 			ScriptToSubdir(Tables, "tables");
-			foreach (var t in Tables) {
-				ScriptToSubdir(t.ForeignKeys, "foreign_keys");
-			}
-
+			ScriptToSubdir(ForeignKeys, "foreign_keys");
 			ScriptToSubdir(Routines.Where(r => r.Type == "PROCEDURE"), "procs");
 			ScriptToSubdir(Routines.Where(r => r.Type == "TRIGGER"), "triggers");
 			ScriptToSubdir(Routines.Where(r => r.Type == "FUNCTION"), "functions");

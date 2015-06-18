@@ -11,7 +11,6 @@ namespace model {
 
 		public ColumnCollection Columns { get; }
 		public ConstraintCollection Constraints { get; }
-		public ForeignKeyCollection ForeignKeys { get; }
 
 		public Table(string owner, string name) {
 			Owner = owner;
@@ -19,7 +18,6 @@ namespace model {
 
 			Columns = new ColumnCollection(this);
 			Constraints = new ConstraintCollection(this);
-			ForeignKeys = new ForeignKeyCollection(this);
 		}
 
 		public override string BaseFileName => $"{Owner}.{Name}";

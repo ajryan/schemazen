@@ -1,39 +1,36 @@
 ﻿using System;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using FubuCore.CommandLine;
 using model;
 
 namespace console {
-	public class Script : DbCommand {
+	public class ScriptInput : DbCommandInput {
+		[Description("A comma separated list of tables to export data from.")]
+		public string DataTablesFlag { get; set; }
 
+		[Description("A regular expression pattern that matches tables to export data from.")]
+		public string DataTablesPatternFlag { get; set; }
+	}
+
+	[CommandDescription("Generate scripts for the specified database.", Name="script")]
+	public class Script : FubuCommand<ScriptInput> {
 		protected string DataTables { get; set; }
 		protected string DataTablesPattern { get; set; }
 
-		public Script() : base(
-			"Script", "Generate scripts for the specified database.") {
-			HasOption(
-				"dataTables=",
-				"A comma separated list of tables to export data from.",
-				o => DataTables = o);
-			HasOption(
-				"dataTablesPattern=",
-				"A regular expression pattern that matches tables to export data from.",
-				o => DataTablesPattern = o);
-		}
-
-		public override int Run(string[] args) {
-			if (!Overwrite && Directory.Exists(ScriptDir))
-			{
-				Console.Write("{0} already exists do you want to replace it? (Y/N)", ScriptDir);
+		public override bool Execute(ScriptInput input)
+		{
+			if (!input.OverwriteFlag && Directory.Exists(input.ScriptDir)) {
+				Console.Write("{0} already exists do you want to replace it? (Y/N)", input.ScriptDir);
 				var key = Console.ReadKey();
-				if (key.Key != ConsoleKey.Y)
-				{
-					return 1;
+				if (key.Key != ConsoleKey.Y) {
+					return false;
 				}
 				Console.WriteLine();
 			}
 
-			var db = CreateDatabase();
+			var db = input.CreateDatabase();
 			db.Load();
 
 			if (!string.IsNullOrEmpty(DataTables)) {
@@ -48,10 +45,10 @@ namespace console {
 				}
 			}
 
-			db.ScriptToDir(Overwrite);
+			db.ScriptToDir();
 
 			Console.WriteLine("Snapshot successfully created at " + db.Dir);
-			return 0;
+			return true;
 		}
 
 		private static void HandleDataTables(Database db, string tableNames) {

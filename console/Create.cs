@@ -1,23 +1,26 @@
 ﻿using System;
 using System.IO;
+using FubuCore.CommandLine;
 using model;
 
 namespace console {
-	public class Create : DbCommand {
+	[CommandDescription("Create the specified database from scripts.", Name="create")]
+	public class Create : FubuCommand<DbCommandInput> {
 
-		public Create() : base(
-		  "Create", "Create the specified database from scripts.") { }
 
-		public override int Run(string[] remainingArguments) {
-			var db = CreateDatabase();
+		public override bool Execute(DbCommandInput input)
+		{
+			var db = input.CreateDatabase();
 			if (!Directory.Exists(db.Dir)){
 				Console.WriteLine("Snapshot dir {0} does not exist.", db.Dir);
-				return 1;
+				return false;
 			}
 
-			if (DBHelper.DbExists(db.ConnectionString) && !Overwrite) {
+			bool overwrite = input.OverwriteFlag;
+
+			if (DBHelper.DbExists(db.ConnectionString) && !input.OverwriteFlag) {
 				Console.WriteLine("{0} {1} already exists do you want to drop it? (Y/N)",
-					Server, DbName);
+					input.Server, input.Database);
 
 				var answer = char.ToUpper(Convert.ToChar(Console.Read()));
 				while (answer != 'Y' && answer != 'N') {
@@ -25,13 +28,13 @@ namespace console {
 				}
 				if (answer == 'N') {
 					Console.WriteLine("create command cancelled.");
-					return 1;
+					return false;
 				}
-				Overwrite = true;
+				overwrite = true;
 			}
 
 			try {
-				db.CreateFromDir(Overwrite);
+				db.CreateFromDir(overwrite);
 				Console.WriteLine("Database created successfully.");
 			}
 			catch (BatchSqlFileException ex) {
@@ -44,10 +47,10 @@ namespace console {
 			catch (SqlFileException ex) {
 				Console.Write(@"A SQL error occurred while executing scripts.
 {0}(Line {1}): {2}", ex.FileName.Replace("/", "\\"), ex.LineNumber, ex.Message);
-				return -1;
+				return false;
 			}
 
-			return 0;
+			return true;
 		}
 	}
 }

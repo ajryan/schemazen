@@ -27,6 +27,17 @@ namespace model {
 		                      || ForeignKeysDiff.Count > 0
 		                      || ForeignKeysDeleted.Count > 0;
 
+		public string DiffDescription => $@"{PropsChanged.Count} props changed
+{TablesAdded.Count} tables added
+{TablesDiff.Count} tables different
+{TablesDeleted.Count} tables deleted
+{RoutinesAdded.Count} routines added
+{RoutinesDiff.Count} routines different
+{RoutinesDeleted.Count} routines deleted
+{ForeignKeysAdded.Count} foreign keys added
+{ForeignKeysDiff.Count} foreign keys different
+{ForeignKeysDeleted.Count} foreign keys deleted";
+
 		public string Script() {
 			var text = new StringBuilder();
 			//alter database props
